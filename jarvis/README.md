@@ -55,3 +55,11 @@ flowchart LR
 - Beyaz liste dışı komutlar yerel shell olarak çalıştırılmaz.
 - Hatalarda fallback ve kontrollü yanıt üretimi vardır.
 - API anahtarları sadece `.env` dosyasında tutulur.
+
+## Agent Orkestrasyonu
+Bu sürümde yanıt üretmeden önce üç ajan birlikte çalışır:
+1. **PlannerAgent**: kullanıcı hedefini eylem odaklı prompta çevirir.
+2. **SafetyAgent**: risk seviyesini `low/medium/high` olarak belirler.
+3. **PersonaAgent**: Ironman modunda profesyonel JARVIS tonunu uygular.
+
+Bu kararlar telemetriye `risk_level` ve sağlayıcı bilgisiyle işlenir.

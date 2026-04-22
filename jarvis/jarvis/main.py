@@ -4,6 +4,7 @@ import argparse
 
 from jarvis.audio import record_chunk
 from jarvis.audio_fx import OpenALFx
+from jarvis.agents import AgentOrchestrator
 from jarvis.backends.router import MultiProviderRouter
 from jarvis.commands import CommandRouter
 from jarvis.config import load_mcp_servers, load_settings
@@ -50,6 +51,7 @@ def main() -> None:
     ui = JarvisConsoleUI()
     mood = GoodMoodEngine(settings.goodmood_boost)
     fx = OpenALFx()
+    agents = AgentOrchestrator()
 
     backend = MultiProviderRouter(settings)
     stt = WhisperSTT(settings.whisper_model, settings.whisper_device, settings.whisper_compute_type)
@@ -120,13 +122,19 @@ def main() -> None:
                     reply = f"MCP araçları hazır. {tools}"
                     telemetry.emit("mcp.tools_listed", {"count": len(tools) if isinstance(tools, list) else 1})
                 else:
-                    system = BASE_SYSTEM_PROMPT
-                    if args.ironman:
-                        system = f"{BASE_SYSTEM_PROMPT} Tonun: yüksek teknoloji, motive, net."
-                    result = backend.reply(user_text, system)
+                    decision = agents.prepare(user_text, args.ironman)
+                    result = backend.reply(decision.final_prompt, decision.system_prompt)
                     prefix = f"{mood.ironman_prefix()} " if args.ironman else ""
                     reply = f"{prefix}{result.content}"
-                    telemetry.emit("llm.reply", {"chars": len(reply), "provider": result.provider, "mood_score": mood_score})
+                    telemetry.emit(
+                        "llm.reply",
+                        {
+                            "chars": len(reply),
+                            "provider": result.provider,
+                            "mood_score": mood_score,
+                            "risk_level": decision.risk_level,
+                        },
+                    )
             except Exception as exc:
                 mood_after_error = mood.on_error()
                 reply = "Sistem geçici olarak zorlanıyor; yeniden deniyorum komutan."

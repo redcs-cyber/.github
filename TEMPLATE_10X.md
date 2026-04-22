@@ -1,9 +1,11 @@
-# Jarvis 10x Repo Template
+# Jarvis 10x Repo Template (Professional)
 
 ## Included
-- `run.py`: core + api orchestrator
-- `core/main.py`: interactive assistant loop
-- `api/server.py`: FastAPI endpoints (`/`, `/health`)
+- `run.py`: core + api process supervisor
+- `core/main.py`: REPL runtime shell
+- `api/server.py`: FastAPI service (`/`, `/health`, `/metrics`, `/dashboard`)
+- `api/static/dashboard.html`: Mission Control visual panel
+- `jarvis/jarvis/agents.py`: Planner + Safety + Persona agent orchestration
 - `requirements.txt`: runtime + build dependencies
 - `.github/workflows/build.yml`: Windows build + artifact upload
 
@@ -12,6 +14,10 @@
 pip install -r requirements.txt
 python run.py
 ```
+
+Open:
+- `http://127.0.0.1:8000/dashboard` (Mission Control)
+- `http://127.0.0.1:8000/metrics` (JSON telemetry)
 
 ## Build locally
 ```bash
