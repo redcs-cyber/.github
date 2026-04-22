@@ -1,5 +1,19 @@
 ## KONATIMIZA HOŞ GELDİNİZ 👋
 
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=180&text=Dijital%20%C4%B0svi%C3%A7re%20%C3%87ak%C4%B1s%C4%B1%20%2B%20Y%C3%BCz%20Tan%C4%B1ma&fontAlign=50&fontAlignY=35&color=0:050505,40:0d1117,100:00ffcc&fontColor=00ffcc&animation=twinkling&desc=Profesyonel%20A%C3%A7%C4%B1l%C4%B1%C5%9F%20Sekans%C4%B1&descAlign=50&descAlignY=60" alt="Dijital İsviçre Çakısı + Yüz Tanıma Açılış" />
+</p>
+
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=900&color=00FFC6&center=true&vCenter=true&width=920&lines=%5BBOOT%5D+Sistem+haz%C4%B1rlan%C4%B1yor...;%5BSCAN%5D+Y%C3%BCz+tan%C4%B1ma+mod%C3%BCl%C3%BC+aktif...;%5BTACTIC%5D+Dijital+%C4%B0svi%C3%A7re+%C3%87ak%C4%B1s%C4%B1+ara%C3%A7lar%C4%B1+y%C3%BCkleniyor...;%5BREADY%5D+Operasyon+ortam%C4%B1+haz%C4%B1r+%E2%9C%94" alt="Animasyonlu Açılış Metni" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/TACTIC-HACKER%20MODE-0d1117?style=for-the-badge&logo=probot&logoColor=00ffcc&labelColor=000000" alt="Hacker Mode" />
+  <img src="https://img.shields.io/badge/FACE%20RECOGNITION-ACTIVE-003b2f?style=for-the-badge&logo=opencv&logoColor=00ffcc&labelColor=000000" alt="Face Recognition Active" />
+  <img src="https://img.shields.io/badge/SYSTEM-ONLINE-072b20?style=for-the-badge&logo=linux&logoColor=00ffcc&labelColor=000000" alt="System Online" />
+</p>
+
 
 ![Türkçe Yazılım Konatı](https://github.com/turkce-yazilim-konati/.github/blob/main/profile/images/t%C3%BCrk%C3%A7e_yaz%C4%B1l%C4%B1m_konat%C4%B1_github_duvar_resmi.jpg "DÜŞ KURDUK!")
 
