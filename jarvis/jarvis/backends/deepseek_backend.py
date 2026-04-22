@@ -3,12 +3,11 @@ from __future__ import annotations
 from openai import OpenAI
 
 
-class OpenAIBackend:
-    def __init__(self, api_key: str, model: str, base_url: str = "") -> None:
-        kwargs = {"api_key": api_key}
-        if base_url:
-            kwargs["base_url"] = base_url
-        self.client = OpenAI(**kwargs)
+class DeepSeekBackend:
+    """DeepSeek OpenAI-compatible backend."""
+
+    def __init__(self, api_key: str, model: str, base_url: str) -> None:
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
 
     def reply(self, prompt: str, system: str = "") -> str:

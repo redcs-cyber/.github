@@ -3,29 +3,22 @@ from __future__ import annotations
 import argparse
 
 from jarvis.audio import record_chunk
-from jarvis.backends.ollama_backend import OllamaBackend
-from jarvis.backends.openai_backend import OpenAIBackend
+from jarvis.audio_fx import OpenALFx
+from jarvis.backends.router import MultiProviderRouter
 from jarvis.commands import CommandRouter
 from jarvis.config import load_mcp_servers, load_settings
 from jarvis.integrations.mcp_client import MCPServerSpec, StdioMCPClient
+from jarvis.ironman import GoodMoodEngine
 from jarvis.stt import WhisperSTT
 from jarvis.telemetry import Telemetry
 from jarvis.tts import PiperTTS
 from jarvis.ui_console import JarvisConsoleUI
 from jarvis.wakeword import WakeWordDetector
 
-SYSTEM_PROMPT = (
+BASE_SYSTEM_PROMPT = (
     "Sen masaüstü asistanısın. Güvenli ol, kısa cevap ver. "
     "Tehlikeli sistem komutlarını asla çalıştırma."
 )
-
-
-def build_backend(mode: str, settings):
-    if mode == "hybrid":
-        if not settings.openai_api_key:
-            raise RuntimeError("Hybrid mod için OPENAI_API_KEY gerekli.")
-        return OpenAIBackend(settings.openai_api_key, settings.openai_model)
-    return OllamaBackend(settings.ollama_url, settings.ollama_model)
 
 
 def bootstrap_mcp_clients(settings, telemetry: Telemetry):
@@ -48,14 +41,17 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["local", "hybrid"], default=None)
     parser.add_argument("--visual", action="store_true", help="Rich live console panel aç")
+    parser.add_argument("--ironman", action="store_true", help="GOODMOOD Ironman persona modu")
     args = parser.parse_args()
 
     settings = load_settings()
     mode = args.mode or settings.mode
     telemetry = Telemetry(settings.telemetry_file)
     ui = JarvisConsoleUI()
+    mood = GoodMoodEngine(settings.goodmood_boost)
+    fx = OpenALFx()
 
-    backend = build_backend(mode, settings)
+    backend = MultiProviderRouter(settings)
     stt = WhisperSTT(settings.whisper_model, settings.whisper_device, settings.whisper_compute_type)
     tts = PiperTTS(settings.piper_exe, settings.piper_model, settings.piper_output_wav)
     wake = WakeWordDetector(settings.wakeword, settings.wakeword_model_path)
@@ -63,7 +59,7 @@ def main() -> None:
     mcp_clients = bootstrap_mcp_clients(settings, telemetry)
 
     ui.set(status="running", mode=mode, wakeword=settings.wakeword, mcp_servers=len(mcp_clients))
-    telemetry.emit("jarvis.started", {"mode": mode, "wakeword": settings.wakeword})
+    telemetry.emit("jarvis.started", {"mode": mode, "wakeword": settings.wakeword, "ironman": args.ironman})
 
     print(f"Jarvis başladı. Mod={mode}. Wake word='{settings.wakeword}'")
     tts.speak("Jarvis hazır.")
@@ -90,6 +86,7 @@ def main() -> None:
                 continue
 
             print(f"[wake] {heard}")
+            fx.arc_reactor_ping()
             telemetry.emit("wake.detected", {"text": heard})
             tts.speak("Dinliyorum.")
 
@@ -101,8 +98,9 @@ def main() -> None:
                 continue
 
             print(f"[user] {user_text}")
+            mood_score = mood.on_user_message(user_text)
             ui.set(last_user=user_text)
-            telemetry.emit("user.prompt", {"text": user_text})
+            telemetry.emit("user.prompt", {"text": user_text, "mood_score": mood_score})
             if live_ctx:
                 live_ctx.update(ui.render())
 
@@ -110,19 +108,29 @@ def main() -> None:
             if local_result:
                 print(f"[cmd] {local_result}")
                 ui.set(last_reply=local_result)
-                telemetry.emit("command.executed", {"result": local_result})
+                telemetry.emit("command.executed", {"result": local_result, "mood_score": mood_score})
                 tts.speak(local_result)
                 if live_ctx:
                     live_ctx.update(ui.render())
                 continue
 
-            if "mcp" in user_text.lower() and mcp_clients:
-                tools = mcp_clients[0].list_tools()
-                reply = f"MCP araçları hazır. {tools}"
-                telemetry.emit("mcp.tools_listed", {"count": len(tools) if isinstance(tools, list) else 1})
-            else:
-                reply = backend.reply(user_text, SYSTEM_PROMPT)
-                telemetry.emit("llm.reply", {"chars": len(reply)})
+            try:
+                if "mcp" in user_text.lower() and mcp_clients:
+                    tools = mcp_clients[0].list_tools()
+                    reply = f"MCP araçları hazır. {tools}"
+                    telemetry.emit("mcp.tools_listed", {"count": len(tools) if isinstance(tools, list) else 1})
+                else:
+                    system = BASE_SYSTEM_PROMPT
+                    if args.ironman:
+                        system = f"{BASE_SYSTEM_PROMPT} Tonun: yüksek teknoloji, motive, net."
+                    result = backend.reply(user_text, system)
+                    prefix = f"{mood.ironman_prefix()} " if args.ironman else ""
+                    reply = f"{prefix}{result.content}"
+                    telemetry.emit("llm.reply", {"chars": len(reply), "provider": result.provider, "mood_score": mood_score})
+            except Exception as exc:
+                mood_after_error = mood.on_error()
+                reply = "Sistem geçici olarak zorlanıyor; yeniden deniyorum komutan."
+                telemetry.emit("llm.error", {"error": str(exc), "mood_score": mood_after_error}, level="error")
 
             print(f"[jarvis] {reply}")
             ui.set(last_reply=reply)

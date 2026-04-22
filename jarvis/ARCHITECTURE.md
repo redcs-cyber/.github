@@ -1,78 +1,53 @@
-# Jarvis Architecture & Data Contracts
+# Jarvis Architecture — Ironman Grade
 
-## 1) Runtime Bileşenleri
-- `main.py`: Orkestrasyon döngüsü
-- `audio.py`: Mikrofon kayıt chunk'ları
-- `stt.py`: Ses->metin
-- `wakeword.py`: Tetik kelime doğrulama
-- `commands.py`: Güvenli komut whitelist
-- `backends/*`: LLM sağlayıcıları
-- `tts.py`: Metin->ses
-- `integrations/mcp_client.py`: MCP stdio bağlantısı
-- `telemetry.py`: Event logging
-- `ui_console.py`: Operasyon paneli
+## Runtime Katmanları
+1. **Input Layer**: Mic + STT + Wake Word
+2. **Mood Layer**: GOODMOOD scoring
+3. **Decision Layer**: CommandRouter + MCP gate
+4. **Brain Layer**: MultiProviderRouter (Ollama -> DeepSeek -> OpenAI)
+5. **Output Layer**: Piper TTS + optional OpenAL FX
+6. **Observability**: Telemetry JSONL + Rich Live Ops
 
-## 2) Sequence Diagram
+## Sequence
 ```mermaid
 sequenceDiagram
   participant U as User
-  participant Mic as Microphone
-  participant STT as WhisperSTT
-  participant W as Wakeword
-  participant R as CommandRouter
-  participant B as LLM Backend
-  participant T as PiperTTS
-  participant M as MCP Client
+  participant S as STT
+  participant W as Wake
+  participant G as GoodMood
+  participant R as Router
+  participant B as MultiProvider
+  participant T as TTS
   participant O as Telemetry
 
-  U->>Mic: konuşma
-  Mic->>STT: audio chunk
-  STT->>W: transcribe + detect
-  W-->>O: wake.detected
+  U->>S: Voice
+  S->>W: transcription
+  W->>G: wake success
+  G-->>O: mood_score
+  S->>R: user prompt
 
-  alt whitelist komut
-    STT->>R: kullanıcı isteği
+  alt local command
+    R->>T: result
     R-->>O: command.executed
-    R->>T: result text
-  else normal LLM
-    STT->>B: prompt
-    alt mcp anahtar kelimesi
-      B->>M: tools/list or tools/call
-      M-->>O: mcp.connected/mcp.error
-    end
-    B-->>O: llm.reply
-    B->>T: reply text
+  else llm request
+    R->>B: prompt
+    B-->>B: ollama/deepseek/openai fallback
+    B->>T: reply
+    B-->>O: llm.reply(provider,mood)
   end
-
-  T->>U: sesli yanıt
 ```
 
-## 3) Telemetry JSONL Sözleşmesi
-Her satır bağımsız bir JSON eventidir:
-
+## Data Contracts
+Telemetry JSONL satırı:
 ```json
 {
   "ts": 1713780000.12,
   "level": "info",
-  "event": "user.prompt",
+  "event": "llm.reply",
   "payload": {
-    "text": "jarvis not defteri aç"
+    "provider": "deepseek",
+    "mood_score": 87.4,
+    "chars": 142
   }
 }
 ```
-
-## 4) MCP Server Sözleşmesi
-`mcp_servers.json`:
-```json
-[
-  {
-    "name": "filesystem",
-    "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\Public"]
-  }
-]
-```
-
-## 5) Deployment Profilleri
-- **Edge/Offline**: Ollama + Piper + Whisper CPU
-- **Hybrid**: OpenAI + Piper + Whisper
-- **Debug/Visual**: `--visual` ile canlı panel + JSONL telemetri

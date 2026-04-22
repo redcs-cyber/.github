@@ -1,59 +1,20 @@
-# Jarvis (Windows) — Local + Hybrid + Visual Ops
+# Jarvis (Windows) — IRONMAN + GOODMOOD + Multi-LLM
 
-Bu proje, Windows açılışında otomatik başlayan ve **operasyon paneli + telemetri** sunan bir sesli asistan iskeleti sağlar.
+Bu sürümde Jarvis, **IRONMAN HUD tarzı**, **GOODMOOD skoru**, **çoklu sağlayıcı fallback** ve **telemetri tabanlı görsel operasyon** ile yükseltildi.
 
 ## Modlar
-- `local`: Wake-word + Whisper + Ollama + Piper (tamamen yerel)
-- `hybrid`: Wake-word + Whisper + OpenAI + Piper
+- `local`: Wake-word + Whisper + Ollama + Piper
+- `hybrid`: Wake-word + Whisper + DeepSeek/OpenAI + Piper
 
-## Teknoloji Yığını
-- Wake Word: `openWakeWord` (opsiyonel)
-- STT: `faster-whisper`
-- LLM: `Ollama` veya `OpenAI`
-- TTS: `Piper`
-- UI: `rich` canlı panel (`--visual`)
-- Telemetri: JSONL event stream (`telemetry/events.jsonl`)
-- MCP: stdio JSON-RPC client (`initialize`, `tools/list`, `tools/call`)
+## Yeni Özellikler
+- **GOODMOOD Engine**: kullanıcı etkileşimine göre mood skoru üretir.
+- **IRONMAN Persona**: `--ironman` ile yüksek teknoloji ton + HUD prefix.
+- **Multi Provider Router**: `BRAIN_PROVIDERS=ollama,deepseek,openai` sıralı fallback.
+- **DeepSeek Backend**: OpenAI-compatible endpoint desteği.
+- **OpenAL FX (opsiyonel)**: wake anında kısa `arc reactor` ping efekti.
+- **Visual Ops Panel**: `--visual` ile canlı durum ekranı.
 
-## Mimari Şema
-```mermaid
-flowchart LR
-  Mic[Microphone] --> Chunker[Audio Chunk Recorder]
-  Chunker --> STT[Whisper STT]
-  STT --> Wake{WakeWord Match?}
-  Wake -- No --> Idle[Listen Loop]
-  Wake -- Yes --> Capture[Command Capture]
-  Capture --> Router{Whitelist Command?}
-  Router -- Yes --> Exec[Safe Command Executor]
-  Router -- No --> Brain[LLM Backend]
-  Brain -->|local| Ollama[Ollama API]
-  Brain -->|hybrid| OpenAI[OpenAI Responses API]
-  Exec --> TTS[Piper TTS]
-  Ollama --> TTS
-  OpenAI --> TTS
-  TTS --> Speaker[Speaker Out]
-
-  subgraph Observability
-    Telemetry[Telemetry JSONL]
-    Visual[Rich Live Ops Panel]
-  end
-
-  STT --> Telemetry
-  Router --> Telemetry
-  Brain --> Telemetry
-  Telemetry --> Visual
-```
-
-## Veri Akışı (Event Tipleri)
-- `jarvis.started`
-- `audio.heard`
-- `wake.detected`
-- `user.prompt`
-- `command.executed`
-- `llm.reply`
-- `mcp.connected` / `mcp.error`
-
-## Kurulum
+## Hızlı Başlangıç
 ```powershell
 cd C:\jarvis
 python -m venv .venv
@@ -65,28 +26,32 @@ copy mcp_servers.example.json mcp_servers.json
 
 ## Çalıştırma
 ```powershell
-python -m jarvis.main --mode local
-python -m jarvis.main --mode hybrid
-python -m jarvis.main --mode local --visual
+python -m jarvis.main --mode local --visual --ironman
+python -m jarvis.main --mode hybrid --visual --ironman
 ```
 
-## Windows başlangıç
-Görev Zamanlayıcı:
-- Trigger: At log on
-- Action: `C:\jarvis\.venv\Scripts\python.exe -m jarvis.main --mode local --visual`
-
-## MCP server örneği
-`mcp_servers.json` içine server komutları eklenir:
-```json
-[
-  {
-    "name": "filesystem",
-    "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\Public"]
-  }
-]
+## Mimari Akış
+```mermaid
+flowchart LR
+  Mic --> STT
+  STT --> Wake{Wakeword}
+  Wake -->|ok| Mood[GOODMOOD Engine]
+  Mood --> Route{Command?}
+  Route -->|local| Cmd[Whitelist Commands]
+  Route -->|llm| Brain[MultiProvider Router]
+  Brain --> Ollama
+  Brain --> DeepSeek
+  Brain --> OpenAI
+  Cmd --> TTS
+  Brain --> TTS
+  Wake --> FX[OpenAL FX]
+  TTS --> Speaker
+  STT --> Telemetry
+  Brain --> Telemetry
+  Telemetry --> Ops[Rich Visual Ops]
 ```
 
-## Güvenlik Notları
-- Komutlar beyaz liste ile sınırlandırılır.
-- Tehlikeli shell operasyonları doğrudan açılmaz.
-- Hibrit modda API anahtarı yalnızca `.env` içinde tutulur.
+## Güvenlik
+- Beyaz liste dışı komutlar yerel shell olarak çalıştırılmaz.
+- Hatalarda fallback ve kontrollü yanıt üretimi vardır.
+- API anahtarları sadece `.env` dosyasında tutulur.
