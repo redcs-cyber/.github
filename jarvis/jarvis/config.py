@@ -27,6 +27,7 @@ class Settings:
     wakeword: str
     wakeword_model_path: str
     mcp_servers_file: str
+    telemetry_file: str
 
 
 def load_settings() -> Settings:
@@ -48,6 +49,7 @@ def load_settings() -> Settings:
         wakeword=os.getenv("WAKEWORD", "jarvis"),
         wakeword_model_path=os.getenv("WAKEWORD_MODEL_PATH", ""),
         mcp_servers_file=os.getenv("MCP_SERVERS_FILE", "mcp_servers.json"),
+        telemetry_file=os.getenv("TELEMETRY_FILE", "telemetry/events.jsonl"),
     )
 
 
