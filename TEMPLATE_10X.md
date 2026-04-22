@@ -34,3 +34,7 @@ pyinstaller run.py --onefile --name Jarvis
 
 ## GitHub Actions artifact
 Workflow tamamlandığında Actions > build > Artifacts altında `Jarvis.exe` indirilebilir.
+
+
+## Final setup guide
+Detaylı Windows kurulum adımları: `FINAL_SETUP_TR.md`
