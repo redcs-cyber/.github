@@ -28,7 +28,10 @@ def bootstrap_mcp_clients(settings, telemetry: Telemetry):
         spec = MCPServerSpec(name=server["name"], command=server["command"])
         try:
             c = StdioMCPClient(spec)
-            c.initialize()
+            init_response = c.initialize()
+            if "result" not in init_response:
+                raise RuntimeError("MCP initialize did not return a result payload")
+            c.notify_initialized()
             clients.append(c)
             telemetry.emit("mcp.connected", {"name": spec.name})
             print(f"[MCP] bağlı: {spec.name}")

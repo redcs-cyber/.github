@@ -4,6 +4,7 @@ import json
 import subprocess
 import threading
 from dataclasses import dataclass
+from queue import Empty
 from queue import Queue
 from typing import Any
 
@@ -15,6 +16,8 @@ class MCPServerSpec:
 
 
 class StdioMCPClient:
+    CLIENT_INFO = {"name": "jarvis", "version": "0.1.0"}
+
     def __init__(self, spec: MCPServerSpec) -> None:
         self.spec = spec
         self.proc = subprocess.Popen(
@@ -27,6 +30,7 @@ class StdioMCPClient:
         )
         self._id = 0
         self._responses: Queue[dict[str, Any]] = Queue()
+        self._request_lock = threading.Lock()
         self._reader = threading.Thread(target=self._read_stdout, daemon=True)
         self._reader.start()
 
@@ -42,24 +46,56 @@ class StdioMCPClient:
                 continue
 
     def _request(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        self._id += 1
+        with self._request_lock:
+            request_id = self._id + 1
+            self._id = request_id
+            payload = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "method": method,
+                "params": params or {},
+            }
+            assert self.proc.stdin is not None
+            self.proc.stdin.write(json.dumps(payload) + "\n")
+            self.proc.stdin.flush()
+
+            while True:
+                try:
+                    msg = self._responses.get(timeout=30)
+                except Empty as exc:
+                    raise TimeoutError(f"MCP request timed out: {method}") from exc
+
+                msg_id = msg.get("id")
+                if msg_id is None:
+                    continue
+                if msg_id == request_id:
+                    if "error" in msg:
+                        raise RuntimeError(f"MCP request failed ({method}): {msg['error']}")
+                    return msg
+
+    def _notify(self, method: str, params: dict[str, Any] | None = None) -> None:
         payload = {
             "jsonrpc": "2.0",
-            "id": self._id,
             "method": method,
             "params": params or {},
         }
-        assert self.proc.stdin is not None
-        self.proc.stdin.write(json.dumps(payload) + "\n")
-        self.proc.stdin.flush()
-
-        while True:
-            msg = self._responses.get(timeout=30)
-            if msg.get("id") == self._id:
-                return msg
+        with self._request_lock:
+            assert self.proc.stdin is not None
+            self.proc.stdin.write(json.dumps(payload) + "\n")
+            self.proc.stdin.flush()
 
     def initialize(self) -> dict[str, Any]:
-        return self._request("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}})
+        return self._request(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": self.CLIENT_INFO,
+            },
+        )
+
+    def notify_initialized(self) -> None:
+        self._notify("notifications/initialized", {})
 
     def list_tools(self) -> dict[str, Any]:
         return self._request("tools/list", {})
