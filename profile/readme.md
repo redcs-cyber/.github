@@ -1,7 +1,7 @@
-## KONATIMIZA HOŞ GELDİNİZ 👋
+## O-P-E-N A-Z-V  HOŞ GELDİNİZ 👋
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=180&text=Dijital%20%C4%B0svi%C3%A7re%20%C3%87ak%C4%B1s%C4%B1%20%2B%20Y%C3%BCz%20Tan%C4%B1ma&fontAlign=50&fontAlignY=35&color=0:050505,40:0d1117,100:00ffcc&fontColor=00ffcc&animation=twinkling&desc=Profesyonel%20A%C3%A7%C4%B1l%C4%B1%C5%9F%20Sekans%C4%B1&descAlign=50&descAlignY=60" alt="Dijital İsviçre Çakısı + Yüz Tanıma Açılış" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=180&text=Dijital%20%C4%B0svi%C3%A7re%20%C3%87ak%C4%B1s%C4%B1%20%2B%20Y%C3%BCz%20Tan%C4%B1ma&fontAlign=50&fontAlignY=35&color=0:050505,40:0d1117,100:00ffcc&fontColor=00ffcc&animation=twinkling&desc=Profesyonel%20A%C3%A7%C4%B1l%C4%B1%C5%9F%20Sekans%C4%B1&descAlign=50&descAlignY=60" alt="Dijital OPENAZV + Yüz Tanıma Açılış" />
 </p>
 
 <p align="center">
