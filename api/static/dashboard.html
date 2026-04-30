@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jarvis Mission Control</title>
+  <style>
+    body {font-family: Inter, Segoe UI, Arial; background:#0b1020; color:#d7e3ff; margin:0;}
+    .wrap {max-width:1200px; margin:20px auto; padding:16px;}
+    .grid {display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+    .card {background:#121a33; border:1px solid #26345f; border-radius:14px; padding:14px;}
+    h1 {margin:0 0 12px; color:#8fb5ff}
+    h3 {margin:0 0 8px; color:#88f0ff}
+    .mono {font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; white-space:pre-wrap}
+    .full {grid-column:1/-1; max-height:380px; overflow:auto}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>JARVIS // Mission Control</h1>
+    <div class="grid">
+      <div class="card"><h3>Event Count</h3><div id="count">-</div></div>
+      <div class="card"><h3>Top Events</h3><div id="events" class="mono">-</div></div>
+      <div class="card"><h3>Providers / Risk</h3><div id="providers" class="mono">-</div></div>
+      <div class="card full"><h3>Latest Events</h3><div id="latest" class="mono">-</div></div>
+    </div>
+  </div>
+<script>
+async function refresh(){
+  const r = await fetch('/metrics');
+  const d = await r.json();
+  document.getElementById('count').textContent = d.event_count;
+  document.getElementById('events').textContent = JSON.stringify(d.top_events, null, 2);
+  document.getElementById('providers').textContent = JSON.stringify({providers:d.providers, risk:d.risk_levels}, null, 2);
+  document.getElementById('latest').textContent = JSON.stringify(d.latest, null, 2);
+}
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>
