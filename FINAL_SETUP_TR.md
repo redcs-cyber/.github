@@ -48,10 +48,20 @@ pyinstaller run.py --onefile --name Jarvis
 ```
 Çıktı: `dist/Jarvis.exe`
 
-## 9) GitHub Actions Artifact
+## 9) GitHub'a Push (PowerShell)
+
+GitHub'da boş bir repo oluşturduktan sonra repo URL'sini aşağıdaki komuta verin:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/push_to_github.ps1 -RepoUrl "https://github.com/KULLANICI_ADI/REPO_ADI.git" -Branch main -CommitMessage "Initial ProB2B/Jarvis setup"
+```
+
+Betik `.gitignore` güvenli varsayılanlarını tamamlar, `origin` remote'unu ayarlar, değişiklik varsa commit oluşturur ve seçilen branch'i GitHub'a pushlar.
+
+## 10) GitHub Actions Artifact
 Push sonrası: **Actions > build > Artifacts > Jarvis**
 
-## 10) Sorun Giderme
+## 11) Sorun Giderme
 - `ModuleNotFoundError`: `pip install -r requirements.txt`
 - `dashboard boş`: `jarvis/telemetry/events.jsonl` oluştuğunu kontrol et
 - `ollama timeout`: `OLLAMA_URL` ve model adını `.env` içinde doğrula
